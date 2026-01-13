@@ -1,0 +1,18 @@
+
+{
+  "name": "BeamSafe MY Pro",
+  "short_name": "BeamSafe",
+  "description": "Professional Malaysian Residential Beam Design Tool",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1085/1085811.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
