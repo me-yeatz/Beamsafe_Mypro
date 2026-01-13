@@ -283,188 +283,374 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 py-8 md:py-12">
+    <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="w-full max-w-7xl mb-12 flex flex-col md:flex-row justify-between items-center gap-6 no-print">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-2xl shadow-blue-500/20">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          </div>
-          <div>
-            <h1 className="text-3xl font-black tracking-tighter text-white uppercase italic">
-              BeamSafe <span className="text-blue-500">Suite</span>
-            </h1>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Foundation & Beam Master • v3.5</p>
-          </div>
-        </div>
+      <header className="header no-print">
+        <div className="container">
+          <div className="header-content">
+            <div className="logo-container">
+              <div className="logo-icon">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              </div>
+              <div className="logo-text">
+                <h1 className="logo-title">
+                  BeamSafe <span className="text-accent-primary">Suite</span>
+                </h1>
+                <p className="logo-subtitle">Foundation & Beam Master • v4.0</p>
+              </div>
+            </div>
 
-        <div className="flex flex-wrap justify-center gap-3">
-          <button onClick={copySummary} className={`px-5 py-2.5 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${copying ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-800 text-slate-500 hover:text-white hover:border-slate-600'}`}>
-            {copying ? 'Copied' : 'Copy'}
-          </button>
-          <button onClick={() => window.print()} className="px-5 py-2.5 rounded-xl border border-slate-800 text-slate-500 text-xs font-black uppercase tracking-widest hover:text-white hover:border-slate-600">
-            Report
-          </button>
-          <button onClick={generateStructuralImage} disabled={isGenerating} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50">
-            {isGenerating ? 'Drawing...' : 'AI Concept'}
-          </button>
+            <div className="controls">
+              <button
+                onClick={copySummary}
+                className={`btn ${copying ? 'btn-copied' : 'btn-secondary'}`}
+              >
+                {copying ? 'Copied!' : 'Copy Report'}
+              </button>
+              <button onClick={() => window.print()} className="btn btn-secondary">
+                Export PDF
+              </button>
+              <button
+                onClick={generateStructuralImage}
+                disabled={isGenerating}
+                className="btn btn-primary"
+              >
+                {isGenerating ? 'Generating...' : 'AI Concept'}
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
-      <main className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* Workspace: Inputs */}
-        <div className="lg:col-span-4 space-y-6 no-print">
-          <section className="glass-card rounded-[2rem] p-8 border-l-4 border-blue-500">
-            <h2 className="text-xs font-black text-blue-500 mb-6 uppercase tracking-[0.2em]">01. Primary Geometry</h2>
-            <div className="space-y-4">
-              <SleekInput label="Span (m)" name="span" value={inputs.span} onChange={handleInputChange} placeholder="4.0" />
-              <div className="grid grid-cols-2 gap-4">
-                <SleekInput label="Width (mm)" name="width" value={inputs.width} onChange={handleInputChange} placeholder="Auto" />
-                <SleekInput label="Depth (mm)" name="depth" value={inputs.depth} onChange={handleInputChange} placeholder="Auto" />
+      <div className="container">
+        <main className="main-layout">
+
+          {/* Workspace: Inputs */}
+          <div className="workspace no-print">
+            <div className="card">
+              <div className="card-header">
+                <h2 className="card-title">01. Primary Geometry</h2>
               </div>
-            </div>
-          </section>
-
-          <section className="glass-card rounded-[2rem] p-8 border-l-4 border-indigo-500">
-            <h2 className="text-xs font-black text-indigo-500 mb-6 uppercase tracking-[0.2em]">02. Loads & Soil Physics</h2>
-            <div className="space-y-4">
-              <SleekInput label="Trib. Width (m)" name="tributaryWidth" value={inputs.tributaryWidth} onChange={handleInputChange} placeholder="3.0" />
-              <SleekInput label="Wall Ht (m)" name="wallHeight" value={inputs.wallHeight} onChange={handleInputChange} placeholder="3.0" />
-              <SleekInput label="Live Load (kPa)" name="liveLoad" value={inputs.liveLoad} onChange={handleInputChange} placeholder="1.5" />
-              <SleekInput label="Soil Capacity (kPa)" name="soilCapacity" value={inputs.soilCapacity} onChange={handleInputChange} placeholder="150" />
-            </div>
-          </section>
-
-          <section className="glass-card rounded-[2rem] p-8 border-l-4 border-slate-500">
-            <h2 className="text-xs font-black text-slate-500 mb-6 uppercase tracking-[0.2em]">03. Column & Foundation</h2>
-            <div className="space-y-4">
-              <SleekInput label="Floor Height (m)" name="colHeight" value={inputs.colHeight} onChange={handleInputChange} placeholder="3.0" />
-            </div>
-          </section>
-
-          <section className="glass-card rounded-[2rem] p-8 border-l-4 border-emerald-500">
-            <h2 className="text-xs font-black text-emerald-500 mb-6 uppercase tracking-[0.2em]">04. Ground Beam Design</h2>
-            <div className="space-y-4">
-              <SleekInput label="Span (m)" name="groundBeamSpan" value={inputs.groundBeamSpan} onChange={handleInputChange} placeholder="3.0" />
-              <div className="grid grid-cols-2 gap-4">
-                <SleekInput label="Width (mm)" name="groundBeamWidth" value={inputs.groundBeamWidth} onChange={handleInputChange} placeholder="200" />
-                <SleekInput label="Depth (mm)" name="groundBeamDepth" value={inputs.groundBeamDepth} onChange={handleInputChange} placeholder="350" />
-              </div>
-              <SleekInput label="Load (kN/m)" name="groundBeamLoad" value={inputs.groundBeamLoad} onChange={handleInputChange} placeholder="10.0" />
-            </div>
-          </section>
-        </div>
-
-        {/* Display: Results & AI */}
-        <div className="lg:col-span-8 space-y-8 print:w-full">
-          {result ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              
-              {/* Dashboard Left */}
-              <div className="space-y-6">
-                <div className={`p-8 rounded-[2rem] flex items-center justify-between border-2 shadow-2xl ${result.status === 'SAFE' ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-rose-500/5 border-rose-500/20'}`}>
-                  <div>
-                    <p className={`text-[9px] font-black uppercase tracking-[0.3em] mb-1 ${result.status === 'SAFE' ? 'text-emerald-500' : 'text-rose-500'}`}>System Integrity</p>
-                    <h2 className={`text-5xl font-black ${result.status === 'SAFE' ? 'text-emerald-400' : 'text-rose-400'}`}>{result.status}</h2>
-                    <p className="text-slate-500 text-[10px] mt-2 font-bold uppercase tracking-widest">Util: {result.utilization}%</p>
+              <div className="input-group">
+                <div className="input-field">
+                  <label className="input-label">Span (m)</label>
+                  <input
+                    type="number"
+                    name="span"
+                    value={inputs.span}
+                    onChange={handleInputChange}
+                    placeholder="4.0"
+                    className="input-control"
+                  />
+                </div>
+                <div className="form-row">
+                  <div className="input-field">
+                    <label className="input-label">Width (mm)</label>
+                    <input
+                      type="number"
+                      name="width"
+                      value={inputs.width}
+                      onChange={handleInputChange}
+                      placeholder="Auto"
+                      className="input-control"
+                    />
+                  </div>
+                  <div className="input-field">
+                    <label className="input-label">Depth (mm)</label>
+                    <input
+                      type="number"
+                      name="depth"
+                      value={inputs.depth}
+                      onChange={handleInputChange}
+                      placeholder="Auto"
+                      className="input-control"
+                    />
                   </div>
                 </div>
-
-                {/* Beam Detail */}
-                <div className="glass-card rounded-[2rem] p-8 space-y-5">
-                   <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-widest border-b border-slate-800 pb-3">Beam Reinforcement Layout</h3>
-                   <ResultRow label="Top Reinforcement" value={result.topBar} color="text-slate-400" />
-                   <ResultRow label="Bottom Reinforcement" value={result.mainBar} color="text-blue-400" />
-                   <ResultRow label="Shear Links" value={result.shearLinks} />
-                   <ResultRow label="Total Moment" value={`${result.moment} kNm`} />
-                </div>
-
-                {/* Foundation Detail */}
-                <div className="glass-card rounded-[2rem] p-8 space-y-5 border-t-2 border-indigo-500/30">
-                   <h3 className="text-[10px] font-black text-indigo-500 uppercase tracking-widest border-b border-slate-800 pb-3">Footing & Steel</h3>
-                   <ResultRow label="Footing Reinforce" value={result.footingSteel} color="text-emerald-400" />
-                   <ResultRow label="Footing Size" value={`${result.footingSize}m x ${result.footingSize}m`} />
-                   <ResultRow label="Total Pressure" value={`${(result.reaction / (result.footingSize * result.footingSize)).toFixed(1)} kPa`} />
-                </div>
-
-                {/* Ground Beam Detail */}
-                <div className="glass-card rounded-[2rem] p-8 space-y-5 border-t-2 border-emerald-500/30">
-                   <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-widest border-b border-slate-800 pb-3">Ground Beam Design</h3>
-                   <ResultRow label="Status" value={result.groundBeamStatus} color={result.groundBeamStatus === 'SAFE' ? 'text-emerald-400' : 'text-rose-400'} />
-                   <ResultRow label="Utilization" value={`${result.groundBeamUtilization}%`} />
-                   <ResultRow label="Top Reinforcement" value={result.groundBeamTopBar} color="text-slate-400" />
-                   <ResultRow label="Bottom Reinforcement" value={result.groundBeamMainBar} color="text-emerald-400" />
-                   <ResultRow label="Shear Links" value={result.groundBeamShearLinks} />
-                   <ResultRow label="Moment" value={`${result.groundBeamMoment} kNm`} />
-                </div>
               </div>
+            </div>
 
-              {/* Dashboard Right */}
-              <div className="space-y-6">
-                <div className="glass-card rounded-[2rem] p-8 flex flex-col items-center justify-center min-h-[350px]">
-                  <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6 no-print">Section & Steel Preview</h3>
-                  <StructuralSVG result={result} />
-                  <div className="mt-8 text-center px-4">
-                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest leading-relaxed">
-                      Schematic showing {result.mainBar} and {result.footingSteel} mesh
-                    </p>
+            <div className="card">
+              <div className="card-header">
+                <h2 className="card-title">02. Loads & Soil Physics</h2>
+              </div>
+              <div className="input-group">
+                <div className="form-row">
+                  <div className="input-field">
+                    <label className="input-label">Trib. Width (m)</label>
+                    <input
+                      type="number"
+                      name="tributaryWidth"
+                      value={inputs.tributaryWidth}
+                      onChange={handleInputChange}
+                      placeholder="3.0"
+                      className="input-control"
+                    />
+                  </div>
+                  <div className="input-field">
+                    <label className="input-label">Wall Ht (m)</label>
+                    <input
+                      type="number"
+                      name="wallHeight"
+                      value={inputs.wallHeight}
+                      onChange={handleInputChange}
+                      placeholder="3.0"
+                      className="input-control"
+                    />
                   </div>
                 </div>
+                <div className="form-row">
+                  <div className="input-field">
+                    <label className="input-label">Live Load (kPa)</label>
+                    <input
+                      type="number"
+                      name="liveLoad"
+                      value={inputs.liveLoad}
+                      onChange={handleInputChange}
+                      placeholder="1.5"
+                      className="input-control"
+                    />
+                  </div>
+                  <div className="input-field">
+                    <label className="input-label">Soil Capacity (kPa)</label>
+                    <input
+                      type="number"
+                      name="soilCapacity"
+                      value={inputs.soilCapacity}
+                      onChange={handleInputChange}
+                      placeholder="150"
+                      className="input-control"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                {aiImage && (
-                  <div className="glass-card rounded-[2.5rem] p-2 overflow-hidden shadow-2xl border-2 border-blue-500/20 group relative">
-                    <img src={aiImage} alt="Structural Detail" className="w-full h-auto rounded-[2rem] opacity-70 group-hover:opacity-100 transition-opacity duration-700" />
-                    <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent">
-                       <p className="text-white font-black text-xs uppercase tracking-widest mb-1">AI Technical Concept</p>
-                       <p className="text-slate-400 text-[9px] uppercase tracking-widest">Generative blueprint based on calculated steel</p>
+            <div className="card">
+              <div className="card-header">
+                <h2 className="card-title">03. Column & Foundation</h2>
+              </div>
+              <div className="input-group">
+                <div className="input-field">
+                  <label className="input-label">Floor Height (m)</label>
+                  <input
+                    type="number"
+                    name="colHeight"
+                    value={inputs.colHeight}
+                    onChange={handleInputChange}
+                    placeholder="3.0"
+                    className="input-control"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="card-header">
+                <h2 className="card-title">04. Ground Beam Design</h2>
+              </div>
+              <div className="input-group">
+                <div className="input-field">
+                  <label className="input-label">Span (m)</label>
+                  <input
+                    type="number"
+                    name="groundBeamSpan"
+                    value={inputs.groundBeamSpan}
+                    onChange={handleInputChange}
+                    placeholder="3.0"
+                    className="input-control"
+                  />
+                </div>
+                <div className="form-row">
+                  <div className="input-field">
+                    <label className="input-label">Width (mm)</label>
+                    <input
+                      type="number"
+                      name="groundBeamWidth"
+                      value={inputs.groundBeamWidth}
+                      onChange={handleInputChange}
+                      placeholder="200"
+                      className="input-control"
+                    />
+                  </div>
+                  <div className="input-field">
+                    <label className="input-label">Depth (mm)</label>
+                    <input
+                      type="number"
+                      name="groundBeamDepth"
+                      value={inputs.groundBeamDepth}
+                      onChange={handleInputChange}
+                      placeholder="350"
+                      className="input-control"
+                    />
+                  </div>
+                </div>
+                <div className="input-field">
+                  <label className="input-label">Load (kN/m)</label>
+                  <input
+                    type="number"
+                    name="groundBeamLoad"
+                    value={inputs.groundBeamLoad}
+                    onChange={handleInputChange}
+                    placeholder="10.0"
+                    className="input-control"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Display: Results & AI */}
+          <div className="results-container">
+            {result ? (
+              <>
+                <div className="dashboard-grid">
+                  {/* Status Card */}
+                  <div className={`status-card ${result.status !== 'SAFE' ? 'unsafe' : ''}`}>
+                    <div className="status-info">
+                      <span className="status-label">System Integrity</span>
+                      <h2 className="status-value">{result.status}</h2>
+                      <span className="status-utilization">Utilization: {result.utilization}%</span>
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="glass-card rounded-[2.5rem] p-12 flex flex-col items-center justify-center text-center h-[500px] border-dashed border-slate-800">
-               <h2 className="text-slate-500 text-lg font-black uppercase tracking-[0.2em]">Analysis Standby</h2>
-               <p className="text-slate-600 text-xs mt-3 max-w-xs uppercase font-bold tracking-tighter">Enter structural parameters to begin design synthesis.</p>
-            </div>
-          )}
-        </div>
-      </main>
 
-      {/* Print Footer */}
-      <footer className="print-only mt-10 text-black border-t-2 border-black pt-6 w-full max-w-4xl mx-auto">
-        <h3 className="text-xl font-bold mb-4 uppercase">Technical Specification Sheet</h3>
-        <p className="text-sm italic">Generated via BeamSafe MY Pro v3.5. All reinforcement schedules must be cross-verified against site-specific requirements.</p>
-      </footer>
+                  {/* Ground Beam Status Card */}
+                  <div className={`status-card ${result.groundBeamStatus !== 'SAFE' ? 'unsafe' : ''}`}>
+                    <div className="status-info">
+                      <span className="status-label">Ground Beam Status</span>
+                      <h2 className="status-value">{result.groundBeamStatus}</h2>
+                      <span className="status-utilization">Utilization: {result.groundBeamUtilization}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="dashboard-grid">
+                  {/* Beam Detail */}
+                  <div className="detail-card">
+                     <h3 className="detail-header">Beam Reinforcement Layout</h3>
+                     <div className="detail-row">
+                        <span className="detail-label">Top Reinforcement</span>
+                        <span className="detail-value">{result.topBar}</span>
+                     </div>
+                     <div className="detail-row">
+                        <span className="detail-label">Bottom Reinforcement</span>
+                        <span className="detail-value text-accent-secondary">{result.mainBar}</span>
+                     </div>
+                     <div className="detail-row">
+                        <span className="detail-label">Shear Links</span>
+                        <span className="detail-value">{result.shearLinks}</span>
+                     </div>
+                     <div className="detail-row">
+                        <span className="detail-label">Total Moment</span>
+                        <span className="detail-value">{result.moment} kNm</span>
+                     </div>
+                     <div className="detail-row">
+                        <span className="detail-label">Dimensions</span>
+                        <span className="detail-value">{result.width}×{result.depth} mm</span>
+                     </div>
+                  </div>
+
+                  {/* Foundation Detail */}
+                  <div className="detail-card">
+                     <h3 className="detail-header">Footing & Steel</h3>
+                     <div className="detail-row">
+                        <span className="detail-label">Footing Reinforcement</span>
+                        <span className="detail-value text-accent-success">{result.footingSteel}</span>
+                     </div>
+                     <div className="detail-row">
+                        <span className="detail-label">Footing Size</span>
+                        <span className="detail-value">{result.footingSize}m × {result.footingSize}m</span>
+                     </div>
+                     <div className="detail-row">
+                        <span className="detail-label">Total Pressure</span>
+                        <span className="detail-value">{(result.reaction / (result.footingSize * result.footingSize)).toFixed(1)} kPa</span>
+                     </div>
+                     <div className="detail-row">
+                        <span className="detail-label">Column Status</span>
+                        <span className={`detail-value ${result.colStatus === 'SAFE' ? 'text-accent-success' : 'text-accent-danger'}`}>{result.colStatus}</span>
+                     </div>
+                     <div className="detail-row">
+                        <span className="detail-label">Column Size</span>
+                        <span className="detail-value">{result.colSize}mm</span>
+                     </div>
+                  </div>
+
+                  {/* Ground Beam Detail */}
+                  <div className="detail-card">
+                     <h3 className="detail-header">Ground Beam Design</h3>
+                     <div className="detail-row">
+                        <span className="detail-label">Status</span>
+                        <span className={`detail-value ${result.groundBeamStatus === 'SAFE' ? 'text-accent-success' : 'text-accent-danger'}`}>{result.groundBeamStatus}</span>
+                     </div>
+                     <div className="detail-row">
+                        <span className="detail-label">Top Reinforcement</span>
+                        <span className="detail-value">{result.groundBeamTopBar}</span>
+                     </div>
+                     <div className="detail-row">
+                        <span className="detail-label">Bottom Reinforcement</span>
+                        <span className="detail-value text-accent-success">{result.groundBeamMainBar}</span>
+                     </div>
+                     <div className="detail-row">
+                        <span className="detail-label">Shear Links</span>
+                        <span className="detail-value">{result.groundBeamShearLinks}</span>
+                     </div>
+                     <div className="detail-row">
+                        <span className="detail-label">Moment</span>
+                        <span className="detail-value">{result.groundBeamMoment} kNm</span>
+                     </div>
+                     <div className="detail-row">
+                        <span className="detail-label">Dimensions</span>
+                        <span className="detail-value">{result.groundBeamWidth}×{result.groundBeamDepth} mm</span>
+                     </div>
+                  </div>
+                </div>
+
+                <div className="dashboard-grid">
+                  {/* Visualization */}
+                  <div className="visualization-container">
+                    <h3 className="visualization-title no-print">Structural Visualization</h3>
+                    <StructuralSVG result={result} />
+                    <div className="mt-6 text-center px-4">
+                      <p className="text-xs text-text-secondary uppercase font-bold tracking-wide">
+                        Schematic showing {result.mainBar} and {result.footingSteel} mesh
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* AI Generated Image */}
+                  {aiImage && (
+                    <div className="ai-container">
+                      <img src={aiImage} alt="Structural Detail" className="w-full h-auto" />
+                      <div className="ai-overlay">
+                         <p className="ai-title">AI Technical Concept</p>
+                         <p className="ai-subtitle">Generated based on calculated steel specifications</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="standby-container">
+                 <h2 className="standby-title">Analysis Standby</h2>
+                 <p className="standby-text">Enter structural parameters to begin design synthesis.</p>
+              </div>
+            )}
+          </div>
+        </main>
+
+        {/* Print Footer */}
+        <footer className="footer print-only">
+          <h3 className="footer-title">Technical Specification Sheet</h3>
+          <p className="footer-text">Generated via BeamSafe MY Pro v4.0. All reinforcement schedules must be cross-verified against site-specific requirements and approved by a licensed structural engineer.</p>
+        </footer>
+      </div>
     </div>
   );
 };
 
-const SleekInput: React.FC<{ label: string; name: string; value: string; onChange: (e: any) => void; placeholder: string }> = ({ label, name, value, onChange, placeholder }) => (
-  <div className="relative group">
-    <label className="block text-[9px] font-black text-slate-600 mb-2 uppercase tracking-widest group-focus-within:text-blue-500 transition-colors">
-      {label}
-    </label>
-    <input
-      type="number"
-      name={name}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      className="w-full bg-slate-900/50 border border-slate-800 rounded-xl p-4 text-white font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all placeholder:text-slate-800"
-    />
-  </div>
-);
-
-const ResultRow: React.FC<{ label: string; value: string; color?: string }> = ({ label, value, color }) => (
-  <div className="flex justify-between items-center py-1">
-    <span className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">{label}</span>
-    <span className={`text-sm font-black tracking-tight ${color || 'text-white'}`}>{value}</span>
-  </div>
-);
+// Removed SleekInput and ResultRow components as they're no longer used in the new design
 
 const StructuralSVG: React.FC<{ result: DesignResult }> = ({ result }) => {
   const beamH = 35;
@@ -478,24 +664,24 @@ const StructuralSVG: React.FC<{ result: DesignResult }> = ({ result }) => {
   return (
     <svg width="240" height="240" viewBox="0 0 240 240">
       {/* Soil */}
-      <line x1="10" y1="210" x2="230" y2="210" stroke="#1e293b" strokeWidth="1.5" strokeDasharray="5 5" />
+      <line x1="10" y1="210" x2="230" y2="210" stroke="#2d4059" strokeWidth="1.5" strokeDasharray="5 5" />
 
       {/* Footing Rebar (Bottom dots/mesh representation) */}
-      <rect x={120 - footingW/2} y={210} width={footingW} height={footingH} fill="#0f172a" stroke="#3b82f6" strokeWidth="1.5" />
+      <rect x={120 - footingW/2} y={210} width={footingW} height={footingH} fill="#1a3a5f" stroke="#3b82f6" strokeWidth="1.5" />
       <line x1={120 - footingW/2 + 5} y1={210 + footingH - 4} x2={120 + footingW/2 - 5} y2={210 + footingH - 4} stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
 
       {/* Column */}
-      <rect x={120 - colW/2} y={105} width={colW} height={105} fill="#0f172a" stroke="#6366f1" strokeWidth="1.5" />
+      <rect x={120 - colW/2} y={105} width={colW} height={105} fill="#1a3a5f" stroke="#6366f1" strokeWidth="1.5" />
 
       {/* Primary Beam Rebar Representation */}
-      <rect x={30} y={105 - beamH} width={180} height={beamH} fill="#0f172a" stroke="#3b82f6" strokeWidth="2" />
+      <rect x={30} y={105 - beamH} width={180} height={beamH} fill="#1a3a5f" stroke="#3b82f6" strokeWidth="2" />
       {/* Top Bars */}
       <line x1="35" y1={105 - beamH + 6} x2="205" y2={105 - beamH + 6} stroke="#94a3b8" strokeWidth="1.5" />
       {/* Bottom Bars */}
       <line x1="35" y1={105 - 6} x2="205" y2={105 - 6} stroke="#3b82f6" strokeWidth="2" />
 
       {/* Ground Beam - Positioned below the column */}
-      <rect x={120 - groundBeamW/2} y={210 - footingH - groundBeamH} width={groundBeamW} height={groundBeamH} fill="#0f172a" stroke="#10b981" strokeWidth="1.5" />
+      <rect x={120 - groundBeamW/2} y={210 - footingH - groundBeamH} width={groundBeamW} height={groundBeamH} fill="#1a3a5f" stroke="#10b981" strokeWidth="1.5" />
       {/* Ground Beam Top Bars */}
       <line x1={120 - groundBeamW/2 + 5} y1={210 - footingH - groundBeamH + 4} x2={120 + groundBeamW/2 - 5} y2={210 - footingH - groundBeamH + 4} stroke="#94a3b8" strokeWidth="1" />
       {/* Ground Beam Bottom Bars */}
