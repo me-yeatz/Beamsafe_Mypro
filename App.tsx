@@ -283,368 +283,337 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="header no-print">
-        <div className="container">
-          <div className="header-content">
-            <div className="logo-container">
-              <div className="logo-icon">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </div>
-              <div className="logo-text">
-                <h1 className="logo-title">
-                  BeamSafe <span className="text-accent-primary">Suite</span>
-                </h1>
-                <p className="logo-subtitle">Foundation & Beam Master • v4.0</p>
-              </div>
+    <div className="experimental-layout">
+      {/* Left Panel - Inputs and Results */}
+      <div className="left-panel">
+        <header className="header no-print">
+          <div className="logo-container">
+            <div className="logo-icon">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
             </div>
+            <div className="logo-text">
+              <h1 className="logo-title">
+                BeamSafe <span style={{color: 'var(--accent-orange)'}}>Suite</span>
+              </h1>
+              <p className="logo-subtitle">Foundation & Beam Master • v4.0</p>
+            </div>
+          </div>
+        </header>
 
-            <div className="controls">
-              <button
-                onClick={copySummary}
-                className={`btn ${copying ? 'btn-copied' : 'btn-secondary'}`}
-              >
-                {copying ? 'Copied!' : 'Copy Report'}
-              </button>
-              <button onClick={() => window.print()} className="btn btn-secondary">
-                Export PDF
-              </button>
-              <button
-                onClick={generateStructuralImage}
-                disabled={isGenerating}
-                className="btn btn-primary"
-              >
-                {isGenerating ? 'Generating...' : 'AI Concept'}
-              </button>
+        {/* Input Sections */}
+        <div className="input-section">
+          <div className="input-header">
+            <h2 className="input-title">01. Primary Geometry</h2>
+          </div>
+          <div className="input-grid">
+            <div className="input-field">
+              <label className="input-label">Span (m)</label>
+              <input
+                type="number"
+                name="span"
+                value={inputs.span}
+                onChange={handleInputChange}
+                placeholder="4.0"
+                className="input-control"
+              />
+            </div>
+            <div className="input-field">
+              <label className="input-label">Width (mm)</label>
+              <input
+                type="number"
+                name="width"
+                value={inputs.width}
+                onChange={handleInputChange}
+                placeholder="Auto"
+                className="input-control"
+              />
+            </div>
+            <div className="input-field">
+              <label className="input-label">Depth (mm)</label>
+              <input
+                type="number"
+                name="depth"
+                value={inputs.depth}
+                onChange={handleInputChange}
+                placeholder="Auto"
+                className="input-control"
+              />
             </div>
           </div>
         </div>
-      </header>
 
-      <div className="container">
-        <main className="main-layout">
-
-          {/* Workspace: Inputs */}
-          <div className="workspace no-print">
-            <div className="card">
-              <div className="card-header">
-                <h2 className="card-title">01. Primary Geometry</h2>
-              </div>
-              <div className="input-group">
-                <div className="input-field">
-                  <label className="input-label">Span (m)</label>
-                  <input
-                    type="number"
-                    name="span"
-                    value={inputs.span}
-                    onChange={handleInputChange}
-                    placeholder="4.0"
-                    className="input-control"
-                  />
-                </div>
-                <div className="form-row">
-                  <div className="input-field">
-                    <label className="input-label">Width (mm)</label>
-                    <input
-                      type="number"
-                      name="width"
-                      value={inputs.width}
-                      onChange={handleInputChange}
-                      placeholder="Auto"
-                      className="input-control"
-                    />
-                  </div>
-                  <div className="input-field">
-                    <label className="input-label">Depth (mm)</label>
-                    <input
-                      type="number"
-                      name="depth"
-                      value={inputs.depth}
-                      onChange={handleInputChange}
-                      placeholder="Auto"
-                      className="input-control"
-                    />
-                  </div>
-                </div>
-              </div>
+        <div className="input-section">
+          <div className="input-header">
+            <h2 className="input-title">02. Loads & Soil Physics</h2>
+          </div>
+          <div className="input-grid">
+            <div className="input-field">
+              <label className="input-label">Trib. Width (m)</label>
+              <input
+                type="number"
+                name="tributaryWidth"
+                value={inputs.tributaryWidth}
+                onChange={handleInputChange}
+                placeholder="3.0"
+                className="input-control"
+              />
             </div>
-
-            <div className="card">
-              <div className="card-header">
-                <h2 className="card-title">02. Loads & Soil Physics</h2>
-              </div>
-              <div className="input-group">
-                <div className="form-row">
-                  <div className="input-field">
-                    <label className="input-label">Trib. Width (m)</label>
-                    <input
-                      type="number"
-                      name="tributaryWidth"
-                      value={inputs.tributaryWidth}
-                      onChange={handleInputChange}
-                      placeholder="3.0"
-                      className="input-control"
-                    />
-                  </div>
-                  <div className="input-field">
-                    <label className="input-label">Wall Ht (m)</label>
-                    <input
-                      type="number"
-                      name="wallHeight"
-                      value={inputs.wallHeight}
-                      onChange={handleInputChange}
-                      placeholder="3.0"
-                      className="input-control"
-                    />
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="input-field">
-                    <label className="input-label">Live Load (kPa)</label>
-                    <input
-                      type="number"
-                      name="liveLoad"
-                      value={inputs.liveLoad}
-                      onChange={handleInputChange}
-                      placeholder="1.5"
-                      className="input-control"
-                    />
-                  </div>
-                  <div className="input-field">
-                    <label className="input-label">Soil Capacity (kPa)</label>
-                    <input
-                      type="number"
-                      name="soilCapacity"
-                      value={inputs.soilCapacity}
-                      onChange={handleInputChange}
-                      placeholder="150"
-                      className="input-control"
-                    />
-                  </div>
-                </div>
-              </div>
+            <div className="input-field">
+              <label className="input-label">Wall Ht (m)</label>
+              <input
+                type="number"
+                name="wallHeight"
+                value={inputs.wallHeight}
+                onChange={handleInputChange}
+                placeholder="3.0"
+                className="input-control"
+              />
             </div>
-
-            <div className="card">
-              <div className="card-header">
-                <h2 className="card-title">03. Column & Foundation</h2>
-              </div>
-              <div className="input-group">
-                <div className="input-field">
-                  <label className="input-label">Floor Height (m)</label>
-                  <input
-                    type="number"
-                    name="colHeight"
-                    value={inputs.colHeight}
-                    onChange={handleInputChange}
-                    placeholder="3.0"
-                    className="input-control"
-                  />
-                </div>
-              </div>
+            <div className="input-field">
+              <label className="input-label">Live Load (kPa)</label>
+              <input
+                type="number"
+                name="liveLoad"
+                value={inputs.liveLoad}
+                onChange={handleInputChange}
+                placeholder="1.5"
+                className="input-control"
+              />
             </div>
-
-            <div className="card">
-              <div className="card-header">
-                <h2 className="card-title">04. Ground Beam Design</h2>
-              </div>
-              <div className="input-group">
-                <div className="input-field">
-                  <label className="input-label">Span (m)</label>
-                  <input
-                    type="number"
-                    name="groundBeamSpan"
-                    value={inputs.groundBeamSpan}
-                    onChange={handleInputChange}
-                    placeholder="3.0"
-                    className="input-control"
-                  />
-                </div>
-                <div className="form-row">
-                  <div className="input-field">
-                    <label className="input-label">Width (mm)</label>
-                    <input
-                      type="number"
-                      name="groundBeamWidth"
-                      value={inputs.groundBeamWidth}
-                      onChange={handleInputChange}
-                      placeholder="200"
-                      className="input-control"
-                    />
-                  </div>
-                  <div className="input-field">
-                    <label className="input-label">Depth (mm)</label>
-                    <input
-                      type="number"
-                      name="groundBeamDepth"
-                      value={inputs.groundBeamDepth}
-                      onChange={handleInputChange}
-                      placeholder="350"
-                      className="input-control"
-                    />
-                  </div>
-                </div>
-                <div className="input-field">
-                  <label className="input-label">Load (kN/m)</label>
-                  <input
-                    type="number"
-                    name="groundBeamLoad"
-                    value={inputs.groundBeamLoad}
-                    onChange={handleInputChange}
-                    placeholder="10.0"
-                    className="input-control"
-                  />
-                </div>
-              </div>
+            <div className="input-field">
+              <label className="input-label">Soil Capacity (kPa)</label>
+              <input
+                type="number"
+                name="soilCapacity"
+                value={inputs.soilCapacity}
+                onChange={handleInputChange}
+                placeholder="150"
+                className="input-control"
+              />
             </div>
           </div>
+        </div>
 
-          {/* Display: Results & AI */}
-          <div className="results-container">
-            {result ? (
-              <>
-                <div className="dashboard-grid">
-                  {/* Status Card */}
-                  <div className={`status-card ${result.status !== 'SAFE' ? 'unsafe' : ''}`}>
-                    <div className="status-info">
-                      <span className="status-label">System Integrity</span>
-                      <h2 className="status-value">{result.status}</h2>
-                      <span className="status-utilization">Utilization: {result.utilization}%</span>
-                    </div>
-                  </div>
-
-                  {/* Ground Beam Status Card */}
-                  <div className={`status-card ${result.groundBeamStatus !== 'SAFE' ? 'unsafe' : ''}`}>
-                    <div className="status-info">
-                      <span className="status-label">Ground Beam Status</span>
-                      <h2 className="status-value">{result.groundBeamStatus}</h2>
-                      <span className="status-utilization">Utilization: {result.groundBeamUtilization}%</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="dashboard-grid">
-                  {/* Beam Detail */}
-                  <div className="detail-card">
-                     <h3 className="detail-header">Beam Reinforcement Layout</h3>
-                     <div className="detail-row">
-                        <span className="detail-label">Top Reinforcement</span>
-                        <span className="detail-value">{result.topBar}</span>
-                     </div>
-                     <div className="detail-row">
-                        <span className="detail-label">Bottom Reinforcement</span>
-                        <span className="detail-value text-accent-secondary">{result.mainBar}</span>
-                     </div>
-                     <div className="detail-row">
-                        <span className="detail-label">Shear Links</span>
-                        <span className="detail-value">{result.shearLinks}</span>
-                     </div>
-                     <div className="detail-row">
-                        <span className="detail-label">Total Moment</span>
-                        <span className="detail-value">{result.moment} kNm</span>
-                     </div>
-                     <div className="detail-row">
-                        <span className="detail-label">Dimensions</span>
-                        <span className="detail-value">{result.width}×{result.depth} mm</span>
-                     </div>
-                  </div>
-
-                  {/* Foundation Detail */}
-                  <div className="detail-card">
-                     <h3 className="detail-header">Footing & Steel</h3>
-                     <div className="detail-row">
-                        <span className="detail-label">Footing Reinforcement</span>
-                        <span className="detail-value text-accent-success">{result.footingSteel}</span>
-                     </div>
-                     <div className="detail-row">
-                        <span className="detail-label">Footing Size</span>
-                        <span className="detail-value">{result.footingSize}m × {result.footingSize}m</span>
-                     </div>
-                     <div className="detail-row">
-                        <span className="detail-label">Total Pressure</span>
-                        <span className="detail-value">{(result.reaction / (result.footingSize * result.footingSize)).toFixed(1)} kPa</span>
-                     </div>
-                     <div className="detail-row">
-                        <span className="detail-label">Column Status</span>
-                        <span className={`detail-value ${result.colStatus === 'SAFE' ? 'text-accent-success' : 'text-accent-danger'}`}>{result.colStatus}</span>
-                     </div>
-                     <div className="detail-row">
-                        <span className="detail-label">Column Size</span>
-                        <span className="detail-value">{result.colSize}mm</span>
-                     </div>
-                  </div>
-
-                  {/* Ground Beam Detail */}
-                  <div className="detail-card">
-                     <h3 className="detail-header">Ground Beam Design</h3>
-                     <div className="detail-row">
-                        <span className="detail-label">Status</span>
-                        <span className={`detail-value ${result.groundBeamStatus === 'SAFE' ? 'text-accent-success' : 'text-accent-danger'}`}>{result.groundBeamStatus}</span>
-                     </div>
-                     <div className="detail-row">
-                        <span className="detail-label">Top Reinforcement</span>
-                        <span className="detail-value">{result.groundBeamTopBar}</span>
-                     </div>
-                     <div className="detail-row">
-                        <span className="detail-label">Bottom Reinforcement</span>
-                        <span className="detail-value text-accent-success">{result.groundBeamMainBar}</span>
-                     </div>
-                     <div className="detail-row">
-                        <span className="detail-label">Shear Links</span>
-                        <span className="detail-value">{result.groundBeamShearLinks}</span>
-                     </div>
-                     <div className="detail-row">
-                        <span className="detail-label">Moment</span>
-                        <span className="detail-value">{result.groundBeamMoment} kNm</span>
-                     </div>
-                     <div className="detail-row">
-                        <span className="detail-label">Dimensions</span>
-                        <span className="detail-value">{result.groundBeamWidth}×{result.groundBeamDepth} mm</span>
-                     </div>
-                  </div>
-                </div>
-
-                <div className="dashboard-grid">
-                  {/* Visualization */}
-                  <div className="visualization-container">
-                    <h3 className="visualization-title no-print">Structural Visualization</h3>
-                    <StructuralSVG result={result} />
-                    <div className="mt-6 text-center px-4">
-                      <p className="text-xs text-text-secondary uppercase font-bold tracking-wide">
-                        Schematic showing {result.mainBar} and {result.footingSteel} mesh
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* AI Generated Image */}
-                  {aiImage && (
-                    <div className="ai-container">
-                      <img src={aiImage} alt="Structural Detail" className="w-full h-auto" />
-                      <div className="ai-overlay">
-                         <p className="ai-title">AI Technical Concept</p>
-                         <p className="ai-subtitle">Generated based on calculated steel specifications</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="standby-container">
-                 <h2 className="standby-title">Analysis Standby</h2>
-                 <p className="standby-text">Enter structural parameters to begin design synthesis.</p>
-              </div>
-            )}
+        <div className="input-section">
+          <div className="input-header">
+            <h2 className="input-title">03. Column & Foundation</h2>
           </div>
-        </main>
+          <div className="input-grid">
+            <div className="input-field">
+              <label className="input-label">Floor Height (m)</label>
+              <input
+                type="number"
+                name="colHeight"
+                value={inputs.colHeight}
+                onChange={handleInputChange}
+                placeholder="3.0"
+                className="input-control"
+              />
+            </div>
+          </div>
+        </div>
 
-        {/* Print Footer */}
+        <div className="input-section">
+          <div className="input-header">
+            <h2 className="input-title">04. Ground Beam Design</h2>
+          </div>
+          <div className="input-grid">
+            <div className="input-field">
+              <label className="input-label">Span (m)</label>
+              <input
+                type="number"
+                name="groundBeamSpan"
+                value={inputs.groundBeamSpan}
+                onChange={handleInputChange}
+                placeholder="3.0"
+                className="input-control"
+              />
+            </div>
+            <div className="input-field">
+              <label className="input-label">Width (mm)</label>
+              <input
+                type="number"
+                name="groundBeamWidth"
+                value={inputs.groundBeamWidth}
+                onChange={handleInputChange}
+                placeholder="200"
+                className="input-control"
+              />
+            </div>
+            <div className="input-field">
+              <label className="input-label">Depth (mm)</label>
+              <input
+                type="number"
+                name="groundBeamDepth"
+                value={inputs.groundBeamDepth}
+                onChange={handleInputChange}
+                placeholder="350"
+                className="input-control"
+              />
+            </div>
+            <div className="input-field">
+              <label className="input-label">Load (kN/m)</label>
+              <input
+                type="number"
+                name="groundBeamLoad"
+                value={inputs.groundBeamLoad}
+                onChange={handleInputChange}
+                placeholder="10.0"
+                className="input-control"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Results Section */}
+        <div className="results-section">
+          {result ? (
+            <>
+              <div className="status-display" style={{backgroundColor: result.status === 'SAFE' ? '#e8f5e9' : '#ffebee', borderColor: result.status === 'SAFE' ? '#4caf50' : '#f44336'}}>
+                <div>
+                  <div className="status-label">System Integrity</div>
+                  <div className="status-value">{result.status}</div>
+                </div>
+                <div>
+                  <div className="status-label">Utilization</div>
+                  <div className="status-value">{result.utilization}%</div>
+                </div>
+              </div>
+
+              <div className="status-display" style={{backgroundColor: result.groundBeamStatus === 'SAFE' ? '#e8f5e9' : '#ffebee', borderColor: result.groundBeamStatus === 'SAFE' ? '#4caf50' : '#f44336'}}>
+                <div>
+                  <div className="status-label">Ground Beam Status</div>
+                  <div className="status-value">{result.groundBeamStatus}</div>
+                </div>
+                <div>
+                  <div className="status-label">Utilization</div>
+                  <div className="status-value">{result.groundBeamUtilization}%</div>
+                </div>
+              </div>
+
+              <div className="results-grid">
+                <div className="result-card">
+                  <div className="result-title">Beam Reinforcement</div>
+                  <div className="result-value">Top: {result.topBar}</div>
+                  <div className="result-value">Bottom: {result.mainBar}</div>
+                  <div className="result-value">Shear: {result.shearLinks}</div>
+                  <div className="result-value">Moment: {result.moment} kNm</div>
+                </div>
+
+                <div className="result-card">
+                  <div className="result-title">Footing Design</div>
+                  <div className="result-value">Reinforce: {result.footingSteel}</div>
+                  <div className="result-value">Size: {result.footingSize}m sq</div>
+                  <div className="result-value">Pressure: {(result.reaction / (result.footingSize * result.footingSize)).toFixed(1)} kPa</div>
+                  <div className="result-value">Col Status: {result.colStatus}</div>
+                </div>
+
+                <div className="result-card">
+                  <div className="result-title">Ground Beam</div>
+                  <div className="result-value">Status: {result.groundBeamStatus}</div>
+                  <div className="result-value">Top: {result.groundBeamTopBar}</div>
+                  <div className="result-value">Bottom: {result.groundBeamMainBar}</div>
+                  <div className="result-value">Shear: {result.groundBeamShearLinks}</div>
+                </div>
+              </div>
+
+              <div className="visualization-area">
+                <h3 className="visualization-title no-print">Structural Visualization</h3>
+                <StructuralSVG result={result} />
+                <div className="mt-4 text-center">
+                  <p className="text-xs uppercase font-bold">
+                    Schematic showing {result.mainBar} and {result.footingSteel} mesh
+                  </p>
+                </div>
+              </div>
+
+              {aiImage && (
+                <div className="visualization-area">
+                  <img src={aiImage} alt="AI Generated Structural Detail" className="w-full h-auto" />
+                </div>
+              )}
+
+              <div className="controls">
+                <button
+                  onClick={copySummary}
+                  className={`btn ${copying ? 'btn-success' : 'btn-secondary'}`}
+                >
+                  {copying ? 'Copied!' : 'Copy Report'}
+                </button>
+                <button onClick={() => window.print()} className="btn btn-secondary">
+                  Export PDF
+                </button>
+                <button
+                  onClick={generateStructuralImage}
+                  disabled={isGenerating}
+                  className="btn btn-primary"
+                >
+                  {isGenerating ? 'Generating...' : 'AI Concept'}
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="visualization-area">
+              <h2 className="text-xl font-bold text-gray-500">Analysis Standby</h2>
+              <p className="text-gray-600 mt-2">Enter structural parameters to begin design synthesis.</p>
+            </div>
+          )}
+        </div>
+
         <footer className="footer print-only">
           <h3 className="footer-title">Technical Specification Sheet</h3>
           <p className="footer-text">Generated via BeamSafe MY Pro v4.0. All reinforcement schedules must be cross-verified against site-specific requirements and approved by a licensed structural engineer.</p>
         </footer>
+      </div>
+
+      {/* Right Panel - Experimental Design Elements */}
+      <div className="right-panel">
+        <div className="kanji-section">
+          <h1 className="kanji-text">構</h1>
+          <div className="kanji-label">STRUCTURE</div>
+        </div>
+
+        <div className="philosophical-section">
+          <p className="philosophical-quote">"Create on reason / Move on instinct"</p>
+          <p className="philosophical-text">Future / Straight line / Right angle / Separate</p>
+        </div>
+
+        <div className="philosophical-section">
+          <p className="philosophical-text">Technology / Evolution / Denying nature / Oversupply</p>
+        </div>
+
+        <div className="philosophical-section">
+          <p className="philosophical-text">Human / Alone / Trip / Stupid</p>
+        </div>
+
+        <div className="barcode">
+          {[...Array(20)].map((_, i) => (
+            <div key={i} className="barcode-line" style={{height: `${Math.random() * 20 + 10}px`}}></div>
+          ))}
+        </div>
+
+        <div className="modular-grid">
+          <div className="grid-block">
+            <div className="grid-label">BEAM</div>
+            <div className="grid-value">{result?.width}×{result?.depth}</div>
+          </div>
+          <div className="grid-block">
+            <div className="grid-label">FOOTING</div>
+            <div className="grid-value">{result?.footingSize}m</div>
+          </div>
+          <div className="grid-block">
+            <div className="grid-label">COLUMN</div>
+            <div className="grid-value">{result?.colSize}mm</div>
+          </div>
+          <div className="grid-block">
+            <div className="grid-label">STEEL</div>
+            <div className="grid-value">{result?.mainBar}</div>
+          </div>
+        </div>
+
+        <div className="section-number">01</div>
       </div>
     </div>
   );
