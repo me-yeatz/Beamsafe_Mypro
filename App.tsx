@@ -76,6 +76,7 @@ const App: React.FC = () => {
   });
 
   const [result, setResult] = useState<DesignResult | null>(null);
+  const [showManual, setShowManual] = useState(false);
   const [copying, setCopying] = useState(false);
   const [aiImage, setAiImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -533,68 +534,75 @@ const App: React.FC = () => {
         </footer>
       </div>
 
-      {/* Right Panel - Manual and Functions */}
+      {/* Right Panel - Original Experimental Design with Manual Button */}
       <div className="right-panel">
-        <div className="manual-section">
-          <h2 className="manual-title">USER MANUAL</h2>
-          <div className="manual-content">
-            <h3>How to Use This Application:</h3>
-            <ol className="manual-steps">
-              <li><strong>Column Design:</strong> Enter your column dimensions (width, length, height) and estimated load</li>
-              <li><strong>Layout:</strong> Specify column spacing for structural layout</li>
-              <li><strong>Materials:</strong> Input concrete grade and soil bearing capacity</li>
-              <li><strong>Ground Beam:</strong> Define span between columns</li>
-              <li><strong>Review:</strong> Check calculated footing and ground beam requirements</li>
-              <li><strong>Verify:</strong> Ensure all statuses show "SAFE"</li>
-            </ol>
+        <div className="kanji-section">
+          <h1 className="kanji-text">🏗️</h1>
+          <div className="kanji-label">STRUCTURE</div>
+        </div>
+
+        <div className="philosophical-section">
+          <p className="philosophical-quote">"Design with precision / Build with safety"</p>
+          <p className="philosophical-text">Structure / Foundation / Beam / Column</p>
+        </div>
+
+        <div className="philosophical-section">
+          <p className="philosophical-text">Load / Capacity / Safety / Standards</p>
+        </div>
+
+        <div className="philosophical-section">
+          <p className="philosophical-text">Engineer / Verify / Approve / Construct</p>
+        </div>
+
+        <div className="barcode">
+          {[...Array(20)].map((_, i) => (
+            <div key={i} className="barcode-line" style={{height: `${Math.random() * 20 + 10}px`}}></div>
+          ))}
+        </div>
+
+        <div className="modular-grid">
+          <div className="grid-block">
+            <div className="grid-label">COLUMN</div>
+            <div className="grid-value">{inputs.colWidth}×{inputs.colLength}</div>
+          </div>
+          <div className="grid-block">
+            <div className="grid-label">FOOTING</div>
+            <div className="grid-value">{result?.footingSize}m</div>
+          </div>
+          <div className="grid-block">
+            <div className="grid-label">LOAD</div>
+            <div className="grid-value">{result?.colLoad}kN</div>
+          </div>
+          <div className="grid-block">
+            <div className="grid-label">STEEL</div>
+            <div className="grid-value">{result?.footingSteel}</div>
           </div>
         </div>
 
-        <div className="functions-section">
-          <h3 className="functions-title">FUNCTIONS</h3>
-          <div className="function-list">
-            <div className="function-item">
-              <div className="function-icon">🏗️</div>
-              <div className="function-desc">Column Verification</div>
-            </div>
-            <div className="function-item">
-              <div className="function-icon">磉</div>
-              <div className="function-desc">Footing Design</div>
-            </div>
-            <div className="function-item">
-              <div className="function-icon">🔗</div>
-              <div className="function-desc">Ground Beam Calc</div>
-            </div>
-            <div className="function-item">
-              <div className="function-icon">📊</div>
-              <div className="function-desc">Load Analysis</div>
-            </div>
-            <div className="function-item">
-              <div className="function-icon">🔍</div>
-              <div className="function-desc">Safety Check</div>
-            </div>
-          </div>
+        <div className="manual-button-container">
+          <button className="manual-button" onClick={() => setShowManual(!showManual)}>
+            {showManual ? 'Hide Manual' : 'Show Manual'}
+          </button>
         </div>
 
-        <div className="standards-section">
-          <h3 className="standards-title">STANDARDS</h3>
-          <div className="standard-list">
-            <div className="standard-item">MS EN 1992 (Eurocode 2)</div>
-            <div className="standard-item">BS 8110</div>
-            <div className="standard-item">Malaysian Standards</div>
-            <div className="standard-item">Reinforced Concrete Design</div>
+        {showManual && (
+          <div className="manual-overlay">
+            <div className="manual-content-box">
+              <h3 className="manual-title">USER MANUAL</h3>
+              <ol className="manual-steps">
+                <li><strong>Column Design:</strong> Enter your column dimensions (width, length, height) and estimated load</li>
+                <li><strong>Layout:</strong> Specify column spacing for structural layout</li>
+                <li><strong>Materials:</strong> Input concrete grade and soil bearing capacity</li>
+                <li><strong>Ground Beam:</strong> Define span between columns</li>
+                <li><strong>Review:</strong> Check calculated footing and ground beam requirements</li>
+                <li><strong>Verify:</strong> Ensure all statuses show "SAFE"</li>
+              </ol>
+              <button className="close-manual-btn" onClick={() => setShowManual(false)}>Close</button>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="tips-section">
-          <h3 className="tips-title">DESIGN TIPS</h3>
-          <ul className="tips-list">
-            <li>Footing area = Column Load ÷ Soil Capacity</li>
-            <li>Minimum footing thickness = 300mm</li>
-            <li>Steel ratio ≥ 0.13% of cross-section</li>
-            <li>Always verify with local codes</li>
-          </ul>
-        </div>
+        <div className="section-number">01</div>
       </div>
     </div>
   );
