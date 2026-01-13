@@ -127,95 +127,141 @@
             font-weight: 700;
         }
 
-        .kanji-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            text-align: center;
-        }
-
-        .kanji-text {
-            font-size: 8rem;
-            font-weight: 900;
-            line-height: 1;
-            margin: 0;
-        }
-
-        .kanji-label {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-top: 1rem;
-            text-transform: uppercase;
-        }
-
-        .philosophical-text {
-            font-size: 0.8rem;
-            line-height: 1.6;
-            font-weight: 500;
-            margin: 1rem 0;
-        }
-
-        .philosophical-quote {
-            font-style: italic;
-            font-weight: 700;
-            margin: 1rem 0;
-            font-size: 0.9rem;
-        }
-
-        .philosophical-section {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 1.5rem;
+        .manual-section {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 1.2rem;
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: var(--radius-round);
+            margin-bottom: 1rem;
         }
 
-        .barcode {
-            display: flex;
-            height: 30px;
-            margin: 1rem 0;
+        .manual-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin: 0 0 1rem 0;
+            color: white;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 0.5rem;
         }
 
-        .barcode-line {
-            width: 2px;
-            background: var(--text-light);
-            margin: 0 1px;
+        .manual-content h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin: 0 0 0.8rem 0;
+            color: white;
         }
 
-        .section-number {
-            font-size: 3rem;
-            font-weight: 900;
-            opacity: 0.3;
-            position: absolute;
-            bottom: 1rem;
-            right: 1rem;
+        .manual-steps {
+            padding-left: 1.2rem;
+            font-size: 0.8rem;
+            line-height: 1.5;
         }
 
-        .modular-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-            margin-top: 1rem;
+        .manual-steps li {
+            margin-bottom: 0.5rem;
         }
 
-        .grid-block {
-            background: rgba(255, 255, 255, 0.1);
+        .functions-section {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 1.2rem;
             border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 1rem;
+            border-radius: var(--radius-round);
+            margin-bottom: 1rem;
+        }
+
+        .functions-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin: 0 0 1rem 0;
+            color: white;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 0.5rem;
+        }
+
+        .function-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .function-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .function-icon {
+            font-size: 1.2rem;
+            width: 2rem;
             text-align: center;
         }
 
-        .grid-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
+        .function-desc {
+            font-size: 0.8rem;
+            font-weight: 500;
         }
 
-        .grid-value {
-            font-size: 1.2rem;
+        .standards-section {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 1.2rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--radius-round);
+            margin-bottom: 1rem;
+        }
+
+        .standards-title {
+            font-size: 0.9rem;
             font-weight: 700;
-            margin-top: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin: 0 0 1rem 0;
+            color: white;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 0.5rem;
+        }
+
+        .standard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .standard-item {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .tips-section {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 1.2rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--radius-round);
+            flex-grow: 1;
+        }
+
+        .tips-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin: 0 0 1rem 0;
+            color: white;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 0.5rem;
+        }
+
+        .tips-list {
+            padding-left: 1rem;
+            font-size: 0.75rem;
+            line-height: 1.5;
+        }
+
+        .tips-list li {
+            margin-bottom: 0.5rem;
         }
 
         .input-section {
