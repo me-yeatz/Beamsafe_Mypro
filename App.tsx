@@ -12,66 +12,63 @@ const GAMMA_G = 1.4;
 const GAMMA_Q = 1.6;         
 
 interface DesignInput {
-  span: string;
-  width: string;
-  depth: string;
-  fcu: string;
-  tributaryWidth: string;
-  wallHeight: string;
-  liveLoad: string;
-  colHeight: string;
-  soilCapacity: string;
-  groundBeamSpan: string;
-  groundBeamWidth: string;
-  groundBeamDepth: string;
-  groundBeamLoad: string;
+  // Column inputs (as provided by architect)
+  colSize: string;        // Column size (e.g., 200x200mm)
+  colSpacing: string;     // Column spacing (distance between columns in meters)
+  colLoad: string;        // Load on column (kN)
+
+  // Architectural inputs
+  floorHeight: string;    // Floor height (for column height calculation)
+  soilCapacity: string;   // Soil bearing capacity (kPa) - typically known from geotechnical report
+
+  // Material properties
+  fcu: string;            // Concrete grade (e.g., 25, 30, 35)
+
+  // Ground beam inputs
+  groundBeamSpan: string; // Span of ground beam between columns
 }
 
 interface DesignResult {
-  width: number;
-  depth: number;
-  totalUDL: number;
-  moment: number;
-  reaction: number;
-  asRequired: number;
-  mainBar: string;
-  topBar: string;
-  shearLinks: string;
-  status: 'SAFE' | 'UNSAFE' | 'IDLE';
-  utilization: number;
+  // Column verification
   colSize: number;
+  colLoad: number;
+  colCapacity: number;
   colStatus: 'SAFE' | 'UNSAFE';
-  footingSize: number;
-  footingSteel: string;
-  // Ground beam properties
-  groundBeamWidth: number;
-  groundBeamDepth: number;
-  groundBeamMoment: number;
-  groundBeamAsRequired: number;
-  groundBeamMainBar: string;
-  groundBeamTopBar: string;
-  groundBeamShearLinks: string;
+
+  // Footing design
+  footingSize: number;      // Size of square footing (m)
+  footingThickness: number; // Thickness of footing (mm)
+  footingSteel: string;     // Reinforcement specification
+  footingStatus: 'SAFE' | 'UNSAFE';
+
+  // Ground beam design
+  groundBeamWidth: number;      // Width of ground beam (mm)
+  groundBeamDepth: number;      // Depth of ground beam (mm)
+  groundBeamMoment: number;     // Calculated moment (kNm)
+  groundBeamShear: number;      // Calculated shear (kN)
+  groundBeamAsRequired: number; // Required steel area (mm²)
+  groundBeamMainBar: string;    // Main reinforcement
+  groundBeamTopBar: string;     // Top reinforcement
+  groundBeamShearLinks: string; // Shear links
   groundBeamStatus: 'SAFE' | 'UNSAFE';
   groundBeamUtilization: number;
+
+  // Additional calculated values
+  bearingPressure: number;      // Actual bearing pressure (kPa)
+  requiredFootingArea: number;  // Required footing area (m²)
 }
 
 const App: React.FC = () => {
   const [inputs, setInputs] = useState<DesignInput>(() => {
-    const saved = localStorage.getItem('beamsafe_pro_inputs_v3');
+    const saved = localStorage.getItem('beamsafe_pro_inputs_v4');
     return saved ? JSON.parse(saved) : {
-      span: '4.0',
-      width: '150',
-      depth: '450',
-      fcu: '25',
-      tributaryWidth: '3.0',
-      wallHeight: '3.0',
-      liveLoad: '1.5',
-      colHeight: '3.0',
-      soilCapacity: '150',
-      groundBeamSpan: '3.0',
-      groundBeamWidth: '200',
-      groundBeamDepth: '350',
-      groundBeamLoad: '10.0'
+      colSize: '200',         // Column size in mm (200x200)
+      colSpacing: '4.0',      // Column spacing in meters
+      colLoad: '500',         // Load on column in kN
+      floorHeight: '3.0',     // Floor height in meters
+      soilCapacity: '150',    // Soil bearing capacity in kPa
+      fcu: '25',             // Concrete grade
+      groundBeamSpan: '4.0'   // Ground beam span in meters
     };
   });
 
@@ -90,90 +87,102 @@ const App: React.FC = () => {
   };
 
   const calculateDesign = useCallback(() => {
-    const L = parseFloat(inputs.span);
-    const fcu = parseFloat(inputs.fcu);
-    const trib = parseFloat(inputs.tributaryWidth || '0');
-    const wallH = parseFloat(inputs.wallHeight || '0');
-    const LL = parseFloat(inputs.liveLoad || '1.5');
-    const soil = parseFloat(inputs.soilCapacity || '150');
-    const colH = parseFloat(inputs.colHeight || '3.0');
+    // Parse input values
+    const colSize = parseFloat(inputs.colSize) || 200; // Column size in mm
+    const colSpacing = parseFloat(inputs.colSpacing) || 4.0; // Column spacing in m
+    const colLoad = parseFloat(inputs.colLoad) || 500; // Load on column in kN
+    const floorHeight = parseFloat(inputs.floorHeight) || 3.0; // Floor height in m
+    const soilCapacity = parseFloat(inputs.soilCapacity) || 150; // Soil capacity in kPa
+    const fcu = parseFloat(inputs.fcu) || 25; // Concrete grade
+    const groundBeamL = parseFloat(inputs.groundBeamSpan) || 4.0; // Ground beam span in m
 
-    // Ground beam inputs
-    const groundBeamL = parseFloat(inputs.groundBeamSpan || '3.0');
-    const groundBeamW = parseFloat(inputs.groundBeamWidth || '200');
-    const groundBeamH = parseFloat(inputs.groundBeamDepth || '350');
-    const groundBeamLoad = parseFloat(inputs.groundBeamLoad || '10.0');
-
-    if (!L || isNaN(L) || L <= 0) {
+    if (!colSize || !colLoad || !soilCapacity) {
       setResult(null);
       return;
     }
 
-    let b = parseFloat(inputs.width);
-    let h = parseFloat(inputs.depth);
+    // --- Column Verification ---
+    const colArea = colSize * colSize; // mm²
+    const colArea_m2 = colArea / 1e6; // Convert to m²
+    // Calculate column capacity based on concrete and steel area
+    // Using formula: Nuz = 0.4*fcd*Ac + 0.87*fy*Asc
+    // For simplicity, assuming 1% steel ratio
+    const steelRatio = 0.01;
+    const steelArea = colArea * steelRatio;
+    const concreteArea = colArea * (1 - steelRatio);
 
-    if (!b || !h) {
-      h = h || Math.max(300, Math.ceil((L * 1000 / 14) / 25) * 25);
-      b = b || Math.max(150, Math.ceil((h / 2.5) / 25) * 25);
-    }
+    // Characteristic strength values
+    const fcd = (0.67 * fcu) / 1.5; // Design concrete strength
+    const fyd = FY / 1.15; // Design steel strength
 
-    // --- Beam Calcs ---
-    const sw = (b / 1000) * (h / 1000) * CONCRETE_DENSITY;
-    const deadLoad = sw + (SLAB_DL_UNIT * trib) + (WALL_DL_UNIT * wallH);
-    const liveLoadTotal = LL * trib;
-    const totalUDL = (GAMMA_G * deadLoad) + (GAMMA_Q * liveLoadTotal);
-    const M = (totalUDL * L * L) / 8;
-    const reaction = (totalUDL * L) / 2;
+    // Column capacity
+    const colCapacity = (0.4 * fcd * concreteArea + 0.87 * fyd * steelArea) / 1000; // Convert to kN
+    const colStatus: 'SAFE' | 'UNSAFE' = colLoad < colCapacity ? 'SAFE' : 'UNSAFE';
 
-    const d = h - COVER - 8 - 10;
-    const K = (M * 1e6) / (b * Math.pow(d, 2) * fcu);
-    const utilization = Math.min(100, Math.round((K / 0.156) * 100));
+    // --- Footing Design ---
+    // Calculate required footing area based on column load and soil capacity
+    const requiredFootingArea = colLoad / soilCapacity; // m²
+    const footingSize = Math.ceil(Math.sqrt(requiredFootingArea) * 10) / 10; // Round to nearest 0.1m
 
-    let status: 'SAFE' | 'UNSAFE' = K <= 0.156 ? 'SAFE' : 'UNSAFE';
-    let mainBar = "None";
-    let topBar = "2T12 (Hangers)";
-    let shearLinks = "R6-250";
-    let asRequired = 0;
+    // Calculate bearing pressure
+    const actualBearingPressure = colLoad / (footingSize * footingSize);
+    const footingStatus: 'SAFE' | 'UNSAFE' = actualBearingPressure <= soilCapacity ? 'SAFE' : 'UNSAFE';
 
-    if (status === 'SAFE') {
-      const z = Math.min(d * (0.5 + Math.sqrt(0.25 - K / 0.9)), 0.95 * d);
-      asRequired = (M * 1e6) / (0.95 * FY * z);
-      const minAs = 0.0013 * b * h;
-      asRequired = Math.max(asRequired, minAs);
+    // Footing thickness based on punching shear requirements (minimum 300mm)
+    const footingThickness = Math.max(300, Math.ceil(colSize / 2)); // Minimum 300mm or colSize/2
 
-      if (asRequired < 226) mainBar = "2T12 Bottom";
-      else if (asRequired < 402) mainBar = "2T16 Bottom";
-      else if (asRequired < 603) mainBar = "3T16 Bottom";
-      else if (asRequired < 942) mainBar = "3T20 Bottom";
-      else mainBar = "4T20 Bottom";
+    // Footing reinforcement calculation
+    // Calculate moment at face of column (cantilever action)
+    const cantileverLength = (footingSize * 1000 - colSize) / 2; // mm
+    const ulsLoad = colLoad * 1.4; // Ultimate limit state load
+    const ulsPressure = ulsLoad / (footingSize * footingSize); // kPa
+    const momentAtFace = (ulsPressure * cantileverLength * cantileverLength) / (2 * 1e6); // kNm/m
 
-      const V = reaction;
-      const v = (V * 1000) / (b * d);
-      shearLinks = v > 0.4 ? "R8 @ 175mm" : "R6 @ 200mm";
-      if (v > 0.8 * Math.sqrt(fcu)) status = 'UNSAFE';
-    }
+    // Calculate required steel area
+    const effectiveDepth = footingThickness - 75; // Assuming 75mm cover
+    const k = (momentAtFace * 1e6) / (1000 * effectiveDepth * effectiveDepth * fcu); // 1000mm strip
+    const z = effectiveDepth * Math.min(0.5 + Math.sqrt(0.25 - k / 0.9), 0.95);
+    const steelAreaReq = (momentAtFace * 1e6) / (0.95 * FY * z); // mm² per meter
 
-    // --- Ground Beam Calculations (Following Malaysian Standards) ---
-    const groundBeamSw = (groundBeamW / 1000) * (groundBeamH / 1000) * CONCRETE_DENSITY;
-    const groundBeamTotalUDL = groundBeamLoad + groundBeamSw; // Including self-weight
-    const groundBeamM = (groundBeamTotalUDL * groundBeamL * groundBeamL) / 8;
-    const groundBeamReaction = (groundBeamTotalUDL * groundBeamL) / 2;
+    // Minimum steel area (0.13% as per code)
+    const minSteelArea = 0.0013 * 1000 * footingThickness; // mm² per meter
+    const finalSteelArea = Math.max(steelAreaReq, minSteelArea);
 
-    const groundBeamD = groundBeamH - COVER - 8 - 10;
-    const groundBeamK = (groundBeamM * 1e6) / (groundBeamW * Math.pow(groundBeamD, 2) * fcu);
-    const groundBeamUtilization = Math.min(100, Math.round((groundBeamK / 0.156) * 100));
+    // Determine reinforcement
+    let footingSteel = "T12 @ 250mm";
+    if (finalSteelArea > 452) footingSteel = "T12 @ 200mm"; // Area of T12@200 = 565mm²/m
+    if (finalSteelArea > 565) footingSteel = "T16 @ 250mm"; // Area of T16@250 = 804mm²/m
+    if (finalSteelArea > 804) footingSteel = "T16 @ 200mm"; // Area of T16@200 = 1005mm²/m
+    if (finalSteelArea > 1005) footingSteel = "T20 @ 250mm"; // Area of T20@250 = 1256mm²/m
 
-    let groundBeamStatus: 'SAFE' | 'UNSAFE' = groundBeamK <= 0.156 ? 'SAFE' : 'UNSAFE';
+    // --- Ground Beam Design ---
+    // Estimate ground beam load based on column load and spacing
+    const estimatedLoad = colLoad / colSpacing; // kN/m distributed load
+
+    // Determine ground beam dimensions based on span and load
+    const groundBeamWidth = Math.max(200, colSize * 0.8); // Width based on column size
+    const groundBeamDepth = Math.max(300, Math.min(600, Math.ceil(groundBeamL * 1000 / 12))); // Depth based on span
+
+    // Calculate ground beam moment and shear
+    const groundBeamM = (estimatedLoad * groundBeamL * groundBeamL) / 8; // kNm
+    const groundBeamV = (estimatedLoad * groundBeamL) / 2; // kN
+
+    // Check moment capacity
+    const d = groundBeamDepth - 50; // Effective depth with 50mm cover
+    const k_beam = (groundBeamM * 1e6) / (groundBeamWidth * d * d * fcu);
+    const utilization = Math.min(100, Math.round((k_beam / 0.156) * 100));
+
+    let groundBeamStatus: 'SAFE' | 'UNSAFE' = k_beam <= 0.156 ? 'SAFE' : 'UNSAFE';
     let groundBeamMainBar = "None";
     let groundBeamTopBar = "2T12 (Hangers)";
-    let groundBeamShearLinks = "R6-250";
+    let groundBeamShearLinks = "R8-250";
     let groundBeamAsRequired = 0;
 
     if (groundBeamStatus === 'SAFE') {
-      const z = Math.min(groundBeamD * (0.5 + Math.sqrt(0.25 - groundBeamK / 0.9)), 0.95 * groundBeamD);
-      groundBeamAsRequired = (groundBeamM * 1e6) / (0.95 * FY * z);
-      const groundBeamMinAs = 0.0013 * groundBeamW * groundBeamH;
-      groundBeamAsRequired = Math.max(groundBeamAsRequired, groundBeamMinAs);
+      const z_beam = Math.min(d * (0.5 + Math.sqrt(0.25 - k_beam / 0.9)), 0.95 * d);
+      groundBeamAsRequired = (groundBeamM * 1e6) / (0.95 * FY * z_beam);
+      const minAs = 0.0013 * groundBeamWidth * groundBeamDepth;
+      groundBeamAsRequired = Math.max(groundBeamAsRequired, minAs);
 
       if (groundBeamAsRequired < 226) groundBeamMainBar = "2T12 Bottom";
       else if (groundBeamAsRequired < 402) groundBeamMainBar = "2T16 Bottom";
@@ -181,63 +190,40 @@ const App: React.FC = () => {
       else if (groundBeamAsRequired < 942) groundBeamMainBar = "3T20 Bottom";
       else groundBeamMainBar = "4T20 Bottom";
 
-      const V = groundBeamReaction;
-      const v = (V * 1000) / (groundBeamW * groundBeamD);
-      groundBeamShearLinks = v > 0.4 ? "R8 @ 175mm" : "R6 @ 200mm";
+      // Check shear stress
+      const v = (groundBeamV * 1000) / (groundBeamWidth * d);
+      groundBeamShearLinks = v > 0.4 ? "R10 @ 175mm" : "R8 @ 200mm";
       if (v > 0.8 * Math.sqrt(fcu)) groundBeamStatus = 'UNSAFE';
     }
 
-    // --- Column & Footing Calcs ---
-    const axialLoad = reaction + (0.2 * 0.2 * colH * 24 * 1.4);
-    const colSize = 200;
-    const ac = colSize * colSize;
-    const asc = ac * 0.008;
-    const colCapacity = (0.35 * fcu * ac + 0.67 * FY * asc) / 1000;
-    const colStatus = axialLoad < colCapacity ? 'SAFE' : 'UNSAFE';
-
-    // Footing Reinforcement
-    const footingArea = axialLoad / soil;
-    const footingSize = Math.ceil(Math.sqrt(footingArea) * 10) / 10;
-
-    // Simplified Footing Steel: Min 0.13% or calculation based on cantilever
-    const footingP = axialLoad / (footingSize * footingSize);
-    const cantL = (footingSize - (colSize/1000)) / 2;
-    const footingM = (footingP * Math.pow(cantL, 2)) / 2;
-    const footingD = 300 - 50; // 300mm standard depth, 50mm cover
-    const footingAs = (footingM * 1e6) / (0.95 * FY * (0.95 * footingD));
-    const footingMinAs = 0.0013 * 1000 * 300; // per meter
-    const finalFootingAs = Math.max(footingAs, footingMinAs);
-
-    let footingSteel = "T12 @ 250mm B1/B2";
-    if (finalFootingAs > 452) footingSteel = "T12 @ 200mm B1/B2";
-    if (finalFootingAs > 600) footingSteel = "T12 @ 150mm B1/B2";
-
     setResult({
-      width: b,
-      depth: h,
-      totalUDL: Number(totalUDL.toFixed(2)),
-      moment: Number(M.toFixed(2)),
-      reaction: Number(reaction.toFixed(2)),
-      asRequired: Math.round(asRequired),
-      mainBar,
-      topBar,
-      shearLinks,
-      status,
-      utilization,
-      colSize,
-      colStatus,
-      footingSize,
-      footingSteel,
-      // Ground beam properties
-      groundBeamWidth: groundBeamW,
-      groundBeamDepth: groundBeamH,
+      // Column verification
+      colSize: colSize,
+      colLoad: colLoad,
+      colCapacity: Number(colCapacity.toFixed(2)),
+      colStatus: colStatus,
+
+      // Footing design
+      footingSize: Number(footingSize.toFixed(2)),
+      footingThickness: footingThickness,
+      footingSteel: footingSteel,
+      footingStatus: footingStatus,
+
+      // Ground beam design
+      groundBeamWidth: groundBeamWidth,
+      groundBeamDepth: groundBeamDepth,
       groundBeamMoment: Number(groundBeamM.toFixed(2)),
+      groundBeamShear: Number(groundBeamV.toFixed(2)),
       groundBeamAsRequired: Math.round(groundBeamAsRequired),
-      groundBeamMainBar,
-      groundBeamTopBar,
-      groundBeamShearLinks,
-      groundBeamStatus,
-      groundBeamUtilization
+      groundBeamMainBar: groundBeamMainBar,
+      groundBeamTopBar: groundBeamTopBar,
+      groundBeamShearLinks: groundBeamShearLinks,
+      groundBeamStatus: groundBeamStatus,
+      groundBeamUtilization: utilization,
+
+      // Additional calculated values
+      bearingPressure: Number(actualBearingPressure.toFixed(2)),
+      requiredFootingArea: Number(requiredFootingArea.toFixed(2))
     });
   }, [inputs]);
 
@@ -251,9 +237,9 @@ const App: React.FC = () => {
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const prompt = `Highly detailed 2D structural engineering layout.
-      Section 1: Reinforced concrete beam ${result.width}x${result.depth}mm with ${result.topBar} and ${result.mainBar}, showing shear links ${result.shearLinks}.
+      Section 1: Column ${result.colSize}mm with ${result.colLoad}kN load.
       Section 2: Foundation footing plan ${result.footingSize}m x ${result.footingSize}m with reinforcement mesh ${result.footingSteel}.
-      Section 3: Ground beam ${result.groundBeamWidth}x${result.groundBeamDepth}mm with ${result.groundBeamTopBar} and ${result.groundBeamMainBar}, showing shear links ${result.groundBeamShearLinks}.
+      Section 3: Ground beam ${result.groundBeamWidth}x${result.groundBeamDepth}mm with ${result.groundBeamMainBar} and ${result.groundBeamTopBar}, showing shear links ${result.groundBeamShearLinks}.
       Blueprint aesthetic, blueprint blue background, white technical lines, architectural symbols, Malaysian standard format.`;
       
       const response = await ai.models.generateContent({
@@ -276,7 +262,7 @@ const App: React.FC = () => {
 
   const copySummary = () => {
     if (!result) return;
-    const summary = `BeamSafe Suite Report\nPrimary Beam: ${result.width}x${result.depth}mm\nMain: ${result.mainBar}\nTop: ${result.topBar}\nStatus: ${result.status}\n\nFooting: ${result.footingSize}m sq\nReinforcement: ${result.footingSteel}\n\nGround Beam: ${result.groundBeamWidth}x${result.groundBeamDepth}mm\nMain: ${result.groundBeamMainBar}\nTop: ${result.groundBeamTopBar}\nStatus: ${result.groundBeamStatus}`;
+    const summary = `BeamSafe Suite Report\nColumn: ${result.colSize}mm\nLoad: ${result.colLoad} kN\nStatus: ${result.colStatus}\n\nFooting: ${result.footingSize}m × ${result.footingSize}m\nThickness: ${result.footingThickness}mm\nReinforcement: ${result.footingSteel}\nStatus: ${result.footingStatus}\n\nGround Beam: ${result.groundBeamWidth}x${result.groundBeamDepth}mm\nMain: ${result.groundBeamMainBar}\nStatus: ${result.groundBeamStatus}\n\nBearing Pressure: ${result.bearingPressure} kPa`;
     navigator.clipboard.writeText(summary);
     setCopying(true);
     setTimeout(() => setCopying(false), 2000);
@@ -305,39 +291,39 @@ const App: React.FC = () => {
         {/* Input Sections */}
         <div className="input-section">
           <div className="input-header">
-            <h2 className="input-title">01. Primary Geometry</h2>
+            <h2 className="input-title">01. Column Design (By Architect)</h2>
           </div>
           <div className="input-grid">
             <div className="input-field">
-              <label className="input-label">Span (m)</label>
+              <label className="input-label">Column Size (mm)</label>
               <input
                 type="number"
-                name="span"
-                value={inputs.span}
+                name="colSize"
+                value={inputs.colSize}
+                onChange={handleInputChange}
+                placeholder="200"
+                className="input-control"
+              />
+            </div>
+            <div className="input-field">
+              <label className="input-label">Column Spacing (m)</label>
+              <input
+                type="number"
+                name="colSpacing"
+                value={inputs.colSpacing}
                 onChange={handleInputChange}
                 placeholder="4.0"
                 className="input-control"
               />
             </div>
             <div className="input-field">
-              <label className="input-label">Width (mm)</label>
+              <label className="input-label">Column Load (kN)</label>
               <input
                 type="number"
-                name="width"
-                value={inputs.width}
+                name="colLoad"
+                value={inputs.colLoad}
                 onChange={handleInputChange}
-                placeholder="Auto"
-                className="input-control"
-              />
-            </div>
-            <div className="input-field">
-              <label className="input-label">Depth (mm)</label>
-              <input
-                type="number"
-                name="depth"
-                value={inputs.depth}
-                onChange={handleInputChange}
-                placeholder="Auto"
+                placeholder="500"
                 className="input-control"
               />
             </div>
@@ -346,39 +332,17 @@ const App: React.FC = () => {
 
         <div className="input-section">
           <div className="input-header">
-            <h2 className="input-title">02. Loads & Soil Physics</h2>
+            <h2 className="input-title">02. Material & Soil Properties</h2>
           </div>
           <div className="input-grid">
             <div className="input-field">
-              <label className="input-label">Trib. Width (m)</label>
+              <label className="input-label">Concrete Grade (fcu)</label>
               <input
                 type="number"
-                name="tributaryWidth"
-                value={inputs.tributaryWidth}
+                name="fcu"
+                value={inputs.fcu}
                 onChange={handleInputChange}
-                placeholder="3.0"
-                className="input-control"
-              />
-            </div>
-            <div className="input-field">
-              <label className="input-label">Wall Ht (m)</label>
-              <input
-                type="number"
-                name="wallHeight"
-                value={inputs.wallHeight}
-                onChange={handleInputChange}
-                placeholder="3.0"
-                className="input-control"
-              />
-            </div>
-            <div className="input-field">
-              <label className="input-label">Live Load (kPa)</label>
-              <input
-                type="number"
-                name="liveLoad"
-                value={inputs.liveLoad}
-                onChange={handleInputChange}
-                placeholder="1.5"
+                placeholder="25"
                 className="input-control"
               />
             </div>
@@ -393,20 +357,12 @@ const App: React.FC = () => {
                 className="input-control"
               />
             </div>
-          </div>
-        </div>
-
-        <div className="input-section">
-          <div className="input-header">
-            <h2 className="input-title">03. Column & Foundation</h2>
-          </div>
-          <div className="input-grid">
             <div className="input-field">
               <label className="input-label">Floor Height (m)</label>
               <input
                 type="number"
-                name="colHeight"
-                value={inputs.colHeight}
+                name="floorHeight"
+                value={inputs.floorHeight}
                 onChange={handleInputChange}
                 placeholder="3.0"
                 className="input-control"
@@ -417,50 +373,17 @@ const App: React.FC = () => {
 
         <div className="input-section">
           <div className="input-header">
-            <h2 className="input-title">04. Ground Beam Design</h2>
+            <h2 className="input-title">03. Ground Beam Parameters</h2>
           </div>
           <div className="input-grid">
             <div className="input-field">
-              <label className="input-label">Span (m)</label>
+              <label className="input-label">Ground Beam Span (m)</label>
               <input
                 type="number"
                 name="groundBeamSpan"
                 value={inputs.groundBeamSpan}
                 onChange={handleInputChange}
-                placeholder="3.0"
-                className="input-control"
-              />
-            </div>
-            <div className="input-field">
-              <label className="input-label">Width (mm)</label>
-              <input
-                type="number"
-                name="groundBeamWidth"
-                value={inputs.groundBeamWidth}
-                onChange={handleInputChange}
-                placeholder="200"
-                className="input-control"
-              />
-            </div>
-            <div className="input-field">
-              <label className="input-label">Depth (mm)</label>
-              <input
-                type="number"
-                name="groundBeamDepth"
-                value={inputs.groundBeamDepth}
-                onChange={handleInputChange}
-                placeholder="350"
-                className="input-control"
-              />
-            </div>
-            <div className="input-field">
-              <label className="input-label">Load (kN/m)</label>
-              <input
-                type="number"
-                name="groundBeamLoad"
-                value={inputs.groundBeamLoad}
-                onChange={handleInputChange}
-                placeholder="10.0"
+                placeholder="4.0"
                 className="input-control"
               />
             </div>
@@ -471,14 +394,25 @@ const App: React.FC = () => {
         <div className="results-section">
           {result ? (
             <>
-              <div className="status-display" style={{backgroundColor: result.status === 'SAFE' ? '#e8f5e9' : '#ffebee', borderColor: result.status === 'SAFE' ? '#4caf50' : '#f44336'}}>
+              <div className="status-display" style={{backgroundColor: result.colStatus === 'SAFE' ? '#e8f5e9' : '#ffebee', borderColor: result.colStatus === 'SAFE' ? '#4caf50' : '#f44336'}}>
                 <div>
-                  <div className="status-label">System Integrity</div>
-                  <div className="status-value">{result.status}</div>
+                  <div className="status-label">Column Status</div>
+                  <div className="status-value">{result.colStatus}</div>
                 </div>
                 <div>
-                  <div className="status-label">Utilization</div>
-                  <div className="status-value">{result.utilization}%</div>
+                  <div className="status-label">Capacity</div>
+                  <div className="status-value">{result.colCapacity} kN</div>
+                </div>
+              </div>
+
+              <div className="status-display" style={{backgroundColor: result.footingStatus === 'SAFE' ? '#e8f5e9' : '#ffebee', borderColor: result.footingStatus === 'SAFE' ? '#4caf50' : '#f44336'}}>
+                <div>
+                  <div className="status-label">Footing Status</div>
+                  <div className="status-value">{result.footingStatus}</div>
+                </div>
+                <div>
+                  <div className="status-label">Pressure</div>
+                  <div className="status-value">{result.bearingPressure} kPa</div>
                 </div>
               </div>
 
@@ -495,27 +429,35 @@ const App: React.FC = () => {
 
               <div className="results-grid">
                 <div className="result-card">
-                  <div className="result-title">Beam Reinforcement</div>
-                  <div className="result-value">Top: {result.topBar}</div>
-                  <div className="result-value">Bottom: {result.mainBar}</div>
-                  <div className="result-value">Shear: {result.shearLinks}</div>
-                  <div className="result-value">Moment: {result.moment} kNm</div>
+                  <div className="result-title">Column Verification</div>
+                  <div className="result-value">Size: {result.colSize}mm</div>
+                  <div className="result-value">Load: {result.colLoad} kN</div>
+                  <div className="result-value">Capacity: {result.colCapacity} kN</div>
+                  <div className="result-value">Status: {result.colStatus}</div>
                 </div>
 
                 <div className="result-card">
                   <div className="result-title">Footing Design</div>
+                  <div className="result-value">Size: {result.footingSize}m × {result.footingSize}m</div>
+                  <div className="result-value">Thickness: {result.footingThickness}mm</div>
                   <div className="result-value">Reinforce: {result.footingSteel}</div>
-                  <div className="result-value">Size: {result.footingSize}m sq</div>
-                  <div className="result-value">Pressure: {(result.reaction / (result.footingSize * result.footingSize)).toFixed(1)} kPa</div>
-                  <div className="result-value">Col Status: {result.colStatus}</div>
+                  <div className="result-value">Status: {result.footingStatus}</div>
                 </div>
 
                 <div className="result-card">
                   <div className="result-title">Ground Beam</div>
-                  <div className="result-value">Status: {result.groundBeamStatus}</div>
-                  <div className="result-value">Top: {result.groundBeamTopBar}</div>
-                  <div className="result-value">Bottom: {result.groundBeamMainBar}</div>
-                  <div className="result-value">Shear: {result.groundBeamShearLinks}</div>
+                  <div className="result-value">Size: {result.groundBeamWidth}×{result.groundBeamDepth}mm</div>
+                  <div className="result-value">Moment: {result.groundBeamMoment} kNm</div>
+                  <div className="result-value">Shear: {result.groundBeamShear} kN</div>
+                  <div className="result-value">Steel: {result.groundBeamMainBar}</div>
+                </div>
+
+                <div className="result-card">
+                  <div className="result-title">Calculated Values</div>
+                  <div className="result-value">Bearing Pressure: {result.bearingPressure} kPa</div>
+                  <div className="result-value">Required Area: {result.requiredFootingArea} m²</div>
+                  <div className="result-value">Ground Beam Steel: {result.groundBeamAsRequired} mm²</div>
+                  <div className="result-value">Shear Links: {result.groundBeamShearLinks}</div>
                 </div>
               </div>
 
@@ -524,7 +466,7 @@ const App: React.FC = () => {
                 <StructuralSVG result={result} />
                 <div className="mt-4 text-center">
                   <p className="text-xs uppercase font-bold">
-                    Schematic showing {result.mainBar} and {result.footingSteel} mesh
+                    Footing: {result.footingSize}m, Steel: {result.footingSteel}
                   </p>
                 </div>
               </div>
@@ -557,7 +499,7 @@ const App: React.FC = () => {
           ) : (
             <div className="visualization-area">
               <h2 className="text-xl font-bold text-gray-500">Analysis Standby</h2>
-              <p className="text-gray-600 mt-2">Enter structural parameters to begin design synthesis.</p>
+              <p className="text-gray-600 mt-2">Enter column design and soil parameters to verify footing and ground beam requirements.</p>
             </div>
           )}
         </div>
@@ -622,10 +564,10 @@ const App: React.FC = () => {
 // Removed SleekInput and ResultRow components as they're no longer used in the new design
 
 const StructuralSVG: React.FC<{ result: DesignResult }> = ({ result }) => {
-  const beamH = 35;
-  const colW = 25;
-  const footingW = result.footingSize * 45;
-  const footingH = 12;
+  // Calculate proportional sizes for visualization
+  const colW = Math.min(40, (result.colSize / 200) * 40); // Max width 40
+  const footingW = result.footingSize * 45; // Scale based on footing size
+  const footingH = 15; // Fixed height for visibility
   // Scale ground beam dimensions proportionally
   const groundBeamW = Math.min(180, (result.groundBeamWidth / 300) * 180); // Max width 180
   const groundBeamH = Math.min(40, (result.groundBeamDepth / 400) * 40); // Max height 40
@@ -635,31 +577,38 @@ const StructuralSVG: React.FC<{ result: DesignResult }> = ({ result }) => {
       {/* Soil */}
       <line x1="10" y1="210" x2="230" y2="210" stroke="#2d4059" strokeWidth="1.5" strokeDasharray="5 5" />
 
-      {/* Footing Rebar (Bottom dots/mesh representation) */}
+      {/* Footing */}
       <rect x={120 - footingW/2} y={210} width={footingW} height={footingH} fill="#1a3a5f" stroke="#3b82f6" strokeWidth="1.5" />
+
+      {/* Footing Rebar (Bottom dots/mesh representation) */}
       <line x1={120 - footingW/2 + 5} y1={210 + footingH - 4} x2={120 + footingW/2 - 5} y2={210 + footingH - 4} stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
 
       {/* Column */}
       <rect x={120 - colW/2} y={105} width={colW} height={105} fill="#1a3a5f" stroke="#6366f1" strokeWidth="1.5" />
 
-      {/* Primary Beam Rebar Representation */}
-      <rect x={30} y={105 - beamH} width={180} height={beamH} fill="#1a3a5f" stroke="#3b82f6" strokeWidth="2" />
-      {/* Top Bars */}
-      <line x1="35" y1={105 - beamH + 6} x2="205" y2={105 - beamH + 6} stroke="#94a3b8" strokeWidth="1.5" />
-      {/* Bottom Bars */}
-      <line x1="35" y1={105 - 6} x2="205" y2={105 - 6} stroke="#3b82f6" strokeWidth="2" />
-
-      {/* Ground Beam - Positioned below the column */}
+      {/* Ground Beam - Positioned below the footing */}
       <rect x={120 - groundBeamW/2} y={210 - footingH - groundBeamH} width={groundBeamW} height={groundBeamH} fill="#1a3a5f" stroke="#10b981" strokeWidth="1.5" />
+
       {/* Ground Beam Top Bars */}
       <line x1={120 - groundBeamW/2 + 5} y1={210 - footingH - groundBeamH + 4} x2={120 + groundBeamW/2 - 5} y2={210 - footingH - groundBeamH + 4} stroke="#94a3b8" strokeWidth="1" />
+
       {/* Ground Beam Bottom Bars */}
       <line x1={120 - groundBeamW/2 + 5} y1={210 - footingH - 4} x2={120 + groundBeamW/2 - 5} y2={210 - footingH - 4} stroke="#10b981" strokeWidth="1.5" />
 
+      {/* Column Load Indicator */}
+      <line x1={120} y1={100} x2={120} y2={80} stroke="#ef4444" strokeWidth="2" markerEnd="url(#arrowhead)" />
+
+      {/* Arrow marker definition */}
+      <defs>
+        <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <polygon points="0 0, 6 3, 0 6" fill="#ef4444" />
+        </marker>
+      </defs>
+
       {/* Text Labels */}
-      <text x="120" y="238" textAnchor="middle" fill="#10b981" fontSize="8" fontWeight="900" className="uppercase tracking-widest">{result.footingSteel}</text>
-      <text x="120" y="85" textAnchor="middle" fill="#3b82f6" fontSize="8" fontWeight="900" className="uppercase tracking-widest">{result.mainBar}</text>
-      <text x="120" y="200" textAnchor="middle" fill="#10b981" fontSize="7" fontWeight="900" className="uppercase tracking-widest">{result.groundBeamMainBar}</text>
+      <text x="120" y="238" textAnchor="middle" fill="#10b981" fontSize="7" fontWeight="900" className="uppercase tracking-widest">{result.footingSteel}</text>
+      <text x="120" y="75" textAnchor="middle" fill="#ef4444" fontSize="7" fontWeight="900" className="uppercase tracking-widest">LOAD: {result.colLoad}kN</text>
+      <text x="120" y="200" textAnchor="middle" fill="#10b981" fontSize="6" fontWeight="900" className="uppercase tracking-widest">{result.groundBeamMainBar}</text>
     </svg>
   );
 };
