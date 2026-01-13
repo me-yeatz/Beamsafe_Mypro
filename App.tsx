@@ -13,12 +13,14 @@ const GAMMA_Q = 1.6;
 
 interface DesignInput {
   // Column inputs (as provided by architect)
-  colSize: string;        // Column size (e.g., 200x200mm)
+  colWidth: string;       // Column width (mm)
+  colLength: string;      // Column length (mm) - typically same as width for square columns
+  colHeight: string;      // Column height (mm) - from foundation to beam level
+
   colSpacing: string;     // Column spacing (distance between columns in meters)
   colLoad: string;        // Load on column (kN)
 
   // Architectural inputs
-  floorHeight: string;    // Floor height (for column height calculation)
   soilCapacity: string;   // Soil bearing capacity (kPa) - typically known from geotechnical report
 
   // Material properties
@@ -60,12 +62,13 @@ interface DesignResult {
 
 const App: React.FC = () => {
   const [inputs, setInputs] = useState<DesignInput>(() => {
-    const saved = localStorage.getItem('beamsafe_pro_inputs_v4');
+    const saved = localStorage.getItem('beamsafe_pro_inputs_v5');
     return saved ? JSON.parse(saved) : {
-      colSize: '200',         // Column size in mm (200x200)
+      colWidth: '200',        // Column width in mm
+      colLength: '200',       // Column length in mm
+      colHeight: '3000',      // Column height in mm (3m)
       colSpacing: '4.0',      // Column spacing in meters
       colLoad: '500',         // Load on column in kN
-      floorHeight: '3.0',     // Floor height in meters
       soilCapacity: '150',    // Soil bearing capacity in kPa
       fcu: '25',             // Concrete grade
       groundBeamSpan: '4.0'   // Ground beam span in meters
@@ -88,22 +91,22 @@ const App: React.FC = () => {
 
   const calculateDesign = useCallback(() => {
     // Parse input values
-    const colSize = parseFloat(inputs.colSize) || 200; // Column size in mm
+    const colWidth = parseFloat(inputs.colWidth) || 200; // Column width in mm
+    const colLength = parseFloat(inputs.colLength) || 200; // Column length in mm
+    const colHeight = parseFloat(inputs.colHeight) || 3000; // Column height in mm
     const colSpacing = parseFloat(inputs.colSpacing) || 4.0; // Column spacing in m
     const colLoad = parseFloat(inputs.colLoad) || 500; // Load on column in kN
-    const floorHeight = parseFloat(inputs.floorHeight) || 3.0; // Floor height in m
     const soilCapacity = parseFloat(inputs.soilCapacity) || 150; // Soil capacity in kPa
     const fcu = parseFloat(inputs.fcu) || 25; // Concrete grade
     const groundBeamL = parseFloat(inputs.groundBeamSpan) || 4.0; // Ground beam span in m
 
-    if (!colSize || !colLoad || !soilCapacity) {
+    if (!colWidth || !colLength || !colLoad || !soilCapacity) {
       setResult(null);
       return;
     }
 
     // --- Column Verification ---
-    const colArea = colSize * colSize; // mm²
-    const colArea_m2 = colArea / 1e6; // Convert to m²
+    const colArea = colWidth * colLength; // mm²
     // Calculate column capacity based on concrete and steel area
     // Using formula: Nuz = 0.4*fcd*Ac + 0.87*fy*Asc
     // For simplicity, assuming 1% steel ratio
@@ -129,11 +132,12 @@ const App: React.FC = () => {
     const footingStatus: 'SAFE' | 'UNSAFE' = actualBearingPressure <= soilCapacity ? 'SAFE' : 'UNSAFE';
 
     // Footing thickness based on punching shear requirements (minimum 300mm)
-    const footingThickness = Math.max(300, Math.ceil(colSize / 2)); // Minimum 300mm or colSize/2
+    const footingThickness = Math.max(300, Math.ceil(Math.max(colWidth, colLength) / 2)); // Minimum 300mm or max dim/2
 
     // Footing reinforcement calculation
     // Calculate moment at face of column (cantilever action)
-    const cantileverLength = (footingSize * 1000 - colSize) / 2; // mm
+    const maxColDim = Math.max(colWidth, colLength); // Use max dimension for conservative design
+    const cantileverLength = (footingSize * 1000 - maxColDim) / 2; // mm
     const ulsLoad = colLoad * 1.4; // Ultimate limit state load
     const ulsPressure = ulsLoad / (footingSize * footingSize); // kPa
     const momentAtFace = (ulsPressure * cantileverLength * cantileverLength) / (2 * 1e6); // kNm/m
@@ -160,7 +164,7 @@ const App: React.FC = () => {
     const estimatedLoad = colLoad / colSpacing; // kN/m distributed load
 
     // Determine ground beam dimensions based on span and load
-    const groundBeamWidth = Math.max(200, colSize * 0.8); // Width based on column size
+    const groundBeamWidth = Math.max(200, Math.max(colWidth, colLength) * 0.8); // Width based on max column dimension
     const groundBeamDepth = Math.max(300, Math.min(600, Math.ceil(groundBeamL * 1000 / 12))); // Depth based on span
 
     // Calculate ground beam moment and shear
@@ -198,7 +202,7 @@ const App: React.FC = () => {
 
     setResult({
       // Column verification
-      colSize: colSize,
+      colSize: Math.max(colWidth, colLength), // Using max dimension for display
       colLoad: colLoad,
       colCapacity: Number(colCapacity.toFixed(2)),
       colStatus: colStatus,
@@ -237,7 +241,7 @@ const App: React.FC = () => {
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const prompt = `Highly detailed 2D structural engineering layout.
-      Section 1: Column ${result.colSize}mm with ${result.colLoad}kN load.
+      Section 1: Column ${inputs.colWidth}mm × ${inputs.colLength}mm with ${result.colLoad}kN load.
       Section 2: Foundation footing plan ${result.footingSize}m x ${result.footingSize}m with reinforcement mesh ${result.footingSteel}.
       Section 3: Ground beam ${result.groundBeamWidth}x${result.groundBeamDepth}mm with ${result.groundBeamMainBar} and ${result.groundBeamTopBar}, showing shear links ${result.groundBeamShearLinks}.
       Blueprint aesthetic, blueprint blue background, white technical lines, architectural symbols, Malaysian standard format.`;
@@ -262,7 +266,7 @@ const App: React.FC = () => {
 
   const copySummary = () => {
     if (!result) return;
-    const summary = `BeamSafe Suite Report\nColumn: ${result.colSize}mm\nLoad: ${result.colLoad} kN\nStatus: ${result.colStatus}\n\nFooting: ${result.footingSize}m × ${result.footingSize}m\nThickness: ${result.footingThickness}mm\nReinforcement: ${result.footingSteel}\nStatus: ${result.footingStatus}\n\nGround Beam: ${result.groundBeamWidth}x${result.groundBeamDepth}mm\nMain: ${result.groundBeamMainBar}\nStatus: ${result.groundBeamStatus}\n\nBearing Pressure: ${result.bearingPressure} kPa`;
+    const summary = `BeamSafe Suite Report\nColumn: ${inputs.colWidth}mm × ${inputs.colLength}mm\nHeight: ${inputs.colHeight}mm\nLoad: ${result.colLoad} kN\nStatus: ${result.colStatus}\n\nFooting: ${result.footingSize}m × ${result.footingSize}m\nThickness: ${result.footingThickness}mm\nReinforcement: ${result.footingSteel}\nStatus: ${result.footingStatus}\n\nGround Beam: ${result.groundBeamWidth}x${result.groundBeamDepth}mm\nMain: ${result.groundBeamMainBar}\nStatus: ${result.groundBeamStatus}\n\nBearing Pressure: ${result.bearingPressure} kPa`;
     navigator.clipboard.writeText(summary);
     setCopying(true);
     setTimeout(() => setCopying(false), 2000);
@@ -295,24 +299,35 @@ const App: React.FC = () => {
           </div>
           <div className="input-grid">
             <div className="input-field">
-              <label className="input-label">Column Size (mm)</label>
+              <label className="input-label">Column Width (mm)</label>
               <input
                 type="number"
-                name="colSize"
-                value={inputs.colSize}
+                name="colWidth"
+                value={inputs.colWidth}
                 onChange={handleInputChange}
                 placeholder="200"
                 className="input-control"
               />
             </div>
             <div className="input-field">
-              <label className="input-label">Column Spacing (m)</label>
+              <label className="input-label">Column Length (mm)</label>
               <input
                 type="number"
-                name="colSpacing"
-                value={inputs.colSpacing}
+                name="colLength"
+                value={inputs.colLength}
                 onChange={handleInputChange}
-                placeholder="4.0"
+                placeholder="200"
+                className="input-control"
+              />
+            </div>
+            <div className="input-field">
+              <label className="input-label">Column Height (mm)</label>
+              <input
+                type="number"
+                name="colHeight"
+                value={inputs.colHeight}
+                onChange={handleInputChange}
+                placeholder="3000"
                 className="input-control"
               />
             </div>
@@ -332,7 +347,26 @@ const App: React.FC = () => {
 
         <div className="input-section">
           <div className="input-header">
-            <h2 className="input-title">02. Material & Soil Properties</h2>
+            <h2 className="input-title">02. Structural Layout</h2>
+          </div>
+          <div className="input-grid">
+            <div className="input-field">
+              <label className="input-label">Column Spacing (m)</label>
+              <input
+                type="number"
+                name="colSpacing"
+                value={inputs.colSpacing}
+                onChange={handleInputChange}
+                placeholder="4.0"
+                className="input-control"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="input-section">
+          <div className="input-header">
+            <h2 className="input-title">03. Material & Soil Properties</h2>
           </div>
           <div className="input-grid">
             <div className="input-field">
@@ -357,23 +391,12 @@ const App: React.FC = () => {
                 className="input-control"
               />
             </div>
-            <div className="input-field">
-              <label className="input-label">Floor Height (m)</label>
-              <input
-                type="number"
-                name="floorHeight"
-                value={inputs.floorHeight}
-                onChange={handleInputChange}
-                placeholder="3.0"
-                className="input-control"
-              />
-            </div>
           </div>
         </div>
 
         <div className="input-section">
           <div className="input-header">
-            <h2 className="input-title">03. Ground Beam Parameters</h2>
+            <h2 className="input-title">04. Ground Beam Parameters</h2>
           </div>
           <div className="input-grid">
             <div className="input-field">
